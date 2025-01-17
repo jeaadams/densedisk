@@ -26,3 +26,8 @@ dependencies = [
 
 [project.urls]
 Homepage = "https://github.com/jeaadams/densedisk"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["densedisk*"]
+exclude = ["notebooks*"]
