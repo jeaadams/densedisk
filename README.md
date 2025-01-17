@@ -1,17 +1,17 @@
 # DenseDisk
 
-DenseDisk is a Python library designed to aid in the analysis and modeling of protoplanetary disks. The library currently includes a module for temperature modeling, providing tools to extract velocity profiles from protoplanetary disk surface data using the `TemperatureProfile` class.
+DenseDisk is a Python library for analyzing and modeling the physical properties of protoplanetary disks. The library provides tools to compute temperature profiles, sound speeds, surface densities, and azimuthal velocities, as well as to extract velocity components from observational data.
 
 ## Features
 
 - Define and calculate detailed temperature profiles of protoplanetary disks.
-- Compute 1D and 2D profiles for temperature, sound speed, density, and surface density.
-- Extract and interpolate velocity profiles from disk surface data.
-- Built-in unit support using `astropy` for seamless calculations.
+- Compute surface densities, sound speed profiles, and density distributions.
+- Calculate azimuthal velocity components and residuals.
+- Extract and interpolate velocity components from observational surface data.
 
 ## Installation
 
-To install DenseDisk, clone this repository and install the dependencies listed in `requirements.txt`:
+To install DenseDisk, clone this repository and install the required dependencies:
 
 ```bash
 $ git clone https://github.com/jeaadams/densedisk.git
@@ -21,32 +21,32 @@ $ pip install -r requirements.txt
 
 ## Usage
 
-Below is an example demonstrating how to use the `TemperatureProfile` class to extract velocity profiles from disk surface data.
+Below is an example demonstrating how to use the `TemperatureProfile` class to extract velocity profiles from disk surface data:
 
 ```python
 from densedisk.temperature import TemperatureProfile
 from astropy import units
 import numpy as np
 
-# Define a temperature profile
-temperature_profile = TemperatureProfile(
+# Define the temperature profile
+profile = TemperatureProfile(
     r_profile=(np.linspace(0, 600, 2000) * units.AU).cgs,
     z_profile=(np.linspace(0, 100, 5000) * units.AU).cgs,
     q=0.5,
     r0=(10 * units.AU).cgs,
     T0=40 * units.K,
     M_star=(1.0 * units.M_sun).cgs,
-    Sigma_0=189 * units.g / units.cm**2,
+    Sigma_0=189 * units.g / units.cm**2
 )
 
-# Extract velocity from disk surface data
-extracted_velocity = temperature_profile.extract_velocity_from_surface(
-    vphi_real=np.load('path_to_velocity_curve_file.npz'),
-    delta_vphi_real=np.load('path_to_residual_velocity_profile.npz'),
-    surf_12co=np.load('path_to_surface_data.npz')
+# Extract velocity components
+extracted_velocity = profile.extract_velocity_from_surface(
+    vphi_real=np.load("path_to_vphi_real.npz"),
+    delta_vphi_real=np.load("path_to_delta_vphi_real.npz"),
+    surf_12co=np.load("path_to_surf_12co.npz")
 )
 
-# Access the extracted velocity components
+# Access the extracted velocity data
 print(extracted_velocity.vphi_real_r)
 print(extracted_velocity.delta_vphi_real_r)
 print(extracted_velocity.vphi_real_v)
@@ -55,43 +55,62 @@ print(extracted_velocity.vphi_co)
 print(extracted_velocity.delta_vphi_co)
 ```
 
-## Classes and Methods
+## Key Classes
 
-### `TemperatureProfile`
-This is the primary class for defining and calculating disk profiles. Key parameters include:
+### `Grids`
+Represents 2D grids of radial and vertical coordinates in the disk.
 
-- **`r_profile`**: Radial profile of the disk (in cm).
-- **`z_profile`**: Vertical profile of the disk (in cm).
-- **`q`**: Temperature gradient parameter.
-- **`r0`**: Reference radius (in cm).
-- **`T0`**: Reference temperature (in Kelvin).
-- **`M_star`**: Mass of the central star (in grams).
-- **`Sigma_0`**: Surface density at the reference radius (in g/cm^2).
+- **`r_grid`**: Radial grid (in cm).
+- **`z_grid`**: Vertical grid (in cm).
 
-#### Key Methods:
+### `Velocity`
+Encapsulates azimuthal velocity components.
 
-- **`calculate_grids`**: Generates 2D grids for radial and vertical profiles.
-- **`calculate_T_profile`**: Computes the 2D temperature profile based on the input parameters.
-- **`calculate_cs_profile`**: Calculates the sound speed profile.
-- **`calculate_density`**: Computes the 2D density profile by integrating the sound speed and gravitational acceleration.
-- **`calculate_velocity`**: Calculates azimuthal velocity (`vphi`) and residuals.
-- **`extract_velocity_from_surface`**: Extracts interpolated velocity components from provided surface data.
+- **`vphi`**: Azimuthal velocity (in cm/s).
+- **`delta_vphi`**: Residual azimuthal velocity (in cm/s).
 
 ### `ExtractedVelocity`
-The output of `extract_velocity_from_surface`, containing:
+Stores the velocity components extracted from surface data.
 
-- **`vphi_real_r`**: Radial velocity component.
-- **`vphi_real_v`**: Vertical velocity component.
-- **`vphi_co`**: Velocity from CO line emission.
-- **`delta_vphi_real_r`**: Residuals for radial velocity.
-- **`delta_vphi_real_v`**: Residuals for vertical velocity.
-- **`delta_vphi_co`**: Residuals for CO line velocity.
+- **`vphi_real_r`**: Radial coordinates for extracted velocity (in cm).
+- **`vphi_real_v`**: Vertical azimuthal velocity components (in cm/s).
+- **`vphi_co`**: CO-based azimuthal velocity (in cm/s).
+- **`delta_vphi_real_r`**: Radial coordinates for residual velocity (in cm).
+- **`delta_vphi_real_v`**: Residual vertical azimuthal velocity components (in cm/s).
+- **`delta_vphi_co`**: Residual CO-based azimuthal velocity (in cm/s).
+
+### `TemperatureProfile`
+The primary class for modeling the disk's temperature profile and related properties.
+
+#### Attributes:
+
+- **`r_profile`**: Radial coordinates of the disk (in cm).
+- **`z_profile`**: Vertical coordinates of the disk (in cm).
+- **`q`**: Exponent of the temperature gradient with radius.
+- **`r0`**: Reference radius (in cm).
+- **`T0`**: Reference temperature at `r0` (in Kelvin).
+- **`M_star`**: Mass of the central star (in grams).
+- **`Sigma_0`**: Surface density at the reference radius (in g/cm^2).
+- **`rho`**: Optional density profile (in g/cm^3).
+
+#### Methods:
+
+- **`calculate_grids()`**: Generate 2D grids for radial and vertical coordinates.
+- **`calculate_sigma()`**: Compute the surface density profile.
+- **`calculate_T_profile()`**: Calculate the 2D temperature profile.
+- **`calculate_cs_profile()`**: Compute the sound speed profile.
+- **`calculate_density()`**: Compute the 2D density distribution.
+- **`calculate_velocity()`**: Calculate azimuthal velocity components and residuals.
+- **`extract_velocity_from_surface()`**: Extract velocity components from surface data.
 
 ## Contributing
 
-Contributions to DenseDisk are welcome! If you encounter any issues or have suggestions for new features, feel free to submit an issue or create a pull request.
+Contributions are welcome! Feel free to open issues or submit pull requests for enhancements or bug fixes.
 
 ## License
 
-DenseDisk is released under the [MIT License](LICENSE).
+DenseDisk is licensed under the [MIT License](LICENSE).
 
+## Acknowledgements
+
+Special thanks to the open-source astronomy and computational physics communities for their invaluable tools and resources.
