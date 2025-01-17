@@ -9,76 +9,76 @@ from scipy.interpolate import RegularGridInterpolator
 
 @dataclass
 class Grids:
-    """...description"""
+    """Representation of 2D grids for the disk's radial and vertical profiles."""
 
     r_grid: units.quantity.Quantity
-    """...description"""
+    """2D grid representing the radial coordinates in the disk (in cm)."""
 
     z_grid: units.quantity.Quantity
-    """...description"""
+    """2D grid representing the vertical coordinates in the disk (in cm)."""
 
 @dataclass
 class Velocity:
-    """...description"""
+    """Azimuthal velocity components in the disk."""
 
     vphi: units.quantity.Quantity
-    """...description"""
+    """2D array of azimuthal velocity (in cm/s)."""
 
     delta_vphi: units.quantity.Quantity
-    """...description"""
+    """2D array of residual azimuthal velocity (in cm/s)."""
 
 @dataclass
 class ExtractedVelocity:
-    """...decsription"""
+    """Extracted velocity components from disk surface data."""
 
     vphi_real_r: np.ndarray
-    """...description"""
+    """1D array of radial coordinates for extracted velocity (in cm)."""
 
     vphi_real_v: np.ndarray
-    """...description"""
+    """1D array of vertical azimuthal velocity components (in cm/s)."""
 
     vphi_co: np.ndarray
-    """...description"""
+    """Interpolated azimuthal velocity from CO line data (in cm/s)."""
 
     delta_vphi_real_r: np.ndarray
-    """...description"""
+    """1D array of radial coordinates for residual velocity (in cm)."""
 
     delta_vphi_real_v: np.ndarray
-    """...description"""
+    """1D array of vertical residual velocity components (in cm/s)."""
 
     delta_vphi_co: np.ndarray
-    """...description"""
+    """Interpolated residual azimuthal velocity from CO line data (in cm/s)."""
 
 @dataclass
 class TemperatureProfile:
-    """...description"""
+    """Model of the temperature profile for a protoplanetary disk."""
 
     r_profile: units.quantity.Quantity
-    """...description"""
+    """1D array representing the radial coordinates of the disk (in cm)."""
 
     z_profile: units.quantity.Quantity
-    """...description"""
+    """1D array representing the vertical coordinates of the disk (in cm)."""
 
     q: float
-    """...description"""
+    """Exponent of the temperature gradient with radius."""
 
     r0: units.quantity.Quantity
-    """...description"""
+    """Reference radius for the temperature profile (in cm)."""
 
     T0: units.quantity.Quantity
-    """...description"""
+    """Reference temperature at r0 (in Kelvin)."""
 
     M_star: units.quantity.Quantity
-    """...description"""
+    """Mass of the central star (in grams)."""
 
     Sigma_0: units.quantity.Quantity
-    """...description"""
+    """Surface density at the reference radius (in g/cm^2)."""
 
     rho: Optional[units.quantity.Quantity] = None
-    """...description"""
+    """Optional 2D density profile of the disk (in g/cm^3)."""
 
     def calculate_grids(self) -> Grids:
-        """...description"""
+        """Generate 2D grids for the radial and vertical coordinates."""
         r_grid, z_grid = np.meshgrid(self.r_profile, self.z_profile)
         return Grids(
             r_grid=r_grid,
@@ -86,22 +86,19 @@ class TemperatureProfile:
         )
     
     def calculate_sigma(self) -> units.quantity.Quantity:
-        """...description"""
+        """Calculate the surface density profile (1D array as a function of radius)."""
         # This will eventually be replaced with a calculation
         # But for now, just return the sigma provided
         return self.Sigma_0
     
     def calculate_T_profile(self) -> units.quantity.Quantity:
-        """...description"""
+        """Calculate the 2D temperature profile based on radial and vertical grids."""
         grids = self.calculate_grids()
         return self.T0 * (grids.r_grid/self.r0)**(-self.q)
 
     def calculate_cs_profile(self):
         """
-        Calculate sound speed profile
-
-        Args:
-            T_profile(2D Array): 2D temperature profile as a function of (r,z)
+        Calculate sound speed profile.
 
         Returns:
             cs_profile: Sound speed profile as a function of (r,z )
@@ -144,9 +141,7 @@ class TemperatureProfile:
         return np.gradient(cs, self.z_profile, axis = 0)
 
     def calculate_density(self):
-        """...description"""
-
-        # Calculate sound speed
+        """Compute the 2D density profile of the disk."""
         cs = self.calculate_cs_profile()
 
         # Calculate how sound speed changes as a function of height (2D)
@@ -185,18 +180,10 @@ class TemperatureProfile:
     
     def calculate_velocity(self) -> Velocity:
         """
-        Calculate the vphi component (comprised of vstar and epsilon_g)
-
-        Args:
-            z_profile(1D array): Vertical height in cm
-            r_profile(float): Radial distance from the star in cm
-            T_profile(2D array): Temperature profile as a function of (r,z) in K
-            rho(2D array): Density profile as a function of (r,z) in g/cm^3
-            M_star(float): Mass of the star in g
+        Calculate the azimuthal velocity components (vphi and delta_vphi).
 
         Returns:
-            vphi(2D array): Velocity as a function of (r,z)
-            delta_vphi(2D array): Residual velocity as a function of (r,z)
+            Velocity: Object containing vphi and delta_vphi as 2D arrays.
         """
 
         if self.rho == None:
@@ -225,7 +212,7 @@ class TemperatureProfile:
             delta_vphi_real: np.lib.npyio.NpzFile,
             surf_12co: np.lib.npyio.NpzFile,
         ) -> ExtractedVelocity:
-        """...description"""
+        """Extract interpolated velocity components from surface data."""
         velocity = self.calculate_velocity()
         surface_cm = (surf_12co['rz1']) * (101 * units.AU).cgs # convert surface heights from arcsecs to cm
         radius_cm = (surf_12co['rr1']) * (101 * units.AU).cgs
