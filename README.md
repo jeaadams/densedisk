@@ -22,6 +22,10 @@ $ pip install -r requirements.txt
 ## Usage
 See the example_usage.py script
 
+```bash
+$ python example_usage.py
+```
+
 
 ## Contributing
 
