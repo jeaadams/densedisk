@@ -377,6 +377,4 @@ def generate_disk_profiles(r_profile, r_T, z_T, T_profile, M_disk = 0.01 * 1.989
 
 
 
-    
-
 
